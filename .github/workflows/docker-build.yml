@@ -12,8 +12,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Login
-        run: docker login -u harry1130 -p {{secrets.DOCKER_HUB_SECRET}}
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_HUB_SECRET }}" | docker login -u harry1130 --password-stdin
       - name: Build Docker image
         run: |
           docker build -t harry1130/runpod_wav2lip:latest .
