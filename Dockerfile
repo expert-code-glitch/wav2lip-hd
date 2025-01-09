@@ -1,7 +1,6 @@
 # Use Python 3.9 as the base image
 FROM python:3.9-slim
 
-Run pip install --no-cache-dir -r requirements.txt
 # Set the working directory
 WORKDIR /app
 
@@ -9,7 +8,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 
 # Clone the Wav2Lip-HD repository
-RUN git clone https://github.com/saifhassan/Wav2Lip-HD.git
+RUN git clone https://github.com/expert-code-glitch/Wav2Lip-HD1.git
 
 # Change to the Wav2Lip-HD directory
 WORKDIR /app/Wav2Lip-HD
