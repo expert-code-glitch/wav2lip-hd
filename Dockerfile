@@ -1,6 +1,7 @@
 # Use Python 3.9 as the base image
 FROM python:3.9-slim
 
+Run pip install --no-cache-dir -r requirements.txt
 # Set the working directory
 WORKDIR /app
 
