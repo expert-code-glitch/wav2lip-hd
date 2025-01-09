@@ -25,12 +25,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 WORKDIR /app/Wav2Lip-HD1/Real-ESRGAN
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Optionally, expose a port if your application runs a server
-# EXPOSE 5000
-
-# Command to run your application (if applicable)
-# CMD ["python", "your_script.py"]
-
+# Ensure gdown is installed before running the download script
 WORKDIR /app/Wav2Lip-HD1
 RUN echo 'import gdown\n\
 urls = {\n\
