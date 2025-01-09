@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 RUN git clone https://github.com/expert-code-glitch/Wav2Lip-HD1.git
 
 # Change to the Wav2Lip-HD directory
-WORKDIR /app/Wav2Lip-HD
+WORKDIR /app/Wav2Lip-HD1
 
 # Clone the Real-ESRGAN repository inside Wav2Lip-HD
 RUN git clone https://github.com/xinntao/Real-ESRGAN.git
@@ -20,7 +20,7 @@ RUN git clone https://github.com/xinntao/Real-ESRGAN.git
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Change to the Real-ESRGAN directory and install requirements
-WORKDIR /app/Wav2Lip-HD/Real-ESRGAN
+WORKDIR /app/Wav2Lip-HD1/Real-ESRGAN
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Optionally, expose a port if your application runs a server
