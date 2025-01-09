@@ -6,7 +6,7 @@ WORKDIR /app
 
 # Install git to clone the repositories
 RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
-
+Run pip install gdown
 # Clone the Wav2Lip-HD repository
 RUN git clone https://github.com/expert-code-glitch/Wav2Lip-HD1.git
 
