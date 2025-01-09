@@ -90,3 +90,15 @@ RUN python download_net_g_67500.py
 RUN python download_s3fd.py
 RUN python download_gfpgan.py
 RUN python download_RealESRGAN_x4plus.py
+
+# Install FastAPI and Uvicorn
+RUN pip install fastapi uvicorn
+
+# Copy the FastAPI application code
+COPY main.py .
+
+# Optionally, expose a port if your application runs a server
+EXPOSE 8000
+
+# Command to run your FastAPI application
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
