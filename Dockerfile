@@ -82,6 +82,8 @@ for name, id in urls.items():\n\
     output = f"Real-ESRGAN/weights/{name}"\n\
     gdown.download(url, output, quiet=False)\n\
     print(f"Loaded {name}")' > download_RealESRGAN_x4plus.py
+
+RUN mkdir -p Real-ESRGAN/gfpgan/weights
 # Run the script to download the checkpoints
 RUN python download_checkpoints.py
 RUN python download_net_g_67500.py
