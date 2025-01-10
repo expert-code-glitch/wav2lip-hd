@@ -92,13 +92,10 @@ RUN python download_gfpgan.py
 RUN python download_RealESRGAN_x4plus.py
 
 # Install FastAPI and Uvicorn
-RUN pip install fastapi uvicorn
+RUN pip install fastapi uvicorn pydantic requests runpod
 
 # Copy the FastAPI application code
 COPY main.py .
 
-# Optionally, expose a port if your application runs a server
-EXPOSE 8000
-
-# Command to run your FastAPI application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Start the container
+CMD ["python3", "-u", "main.py"]
