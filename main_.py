@@ -1,22 +1,20 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
-from pydantic import BaseModel
+import runpod
 import subprocess
 import requests
 import os
 import uuid
 import logging
+from fastapi import HTTPException
+from fastapi.responses import FileResponse
+from pydantic import BaseModel
 from concurrent.futures import ThreadPoolExecutor
-from fastapi.staticfiles import StaticFiles
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-app = FastAPI()
 VIDEO_OUTPUT_DIR = './output_videos_wav2lip/'
 os.makedirs(VIDEO_OUTPUT_DIR, exist_ok=True)
-app.mount("/output_videos_wav2lip", StaticFiles(directory=VIDEO_OUTPUT_DIR), name="output_videos_wav2lip")
-executor = ThreadPoolExecutor(max_workers=3)
 
+executor = ThreadPoolExecutor(max_workers=3)
 task_status = {}
 
 class VideoRequest(BaseModel):
@@ -90,45 +88,56 @@ def process_video_task(task_id, avatar_id, voice_id):
         f"--no_sr --no_segmentation --outfile {output_videos_wav2lip}/{task_id}.mp4 "
         f"--task_id {task_id}"  # Pass the task_id as an argument
     )
-    
+
     run_command(command)
     task_status[task_id] = "Completed"
 
-@app.post("/video/generate")
-async def generate_video(request: VideoRequest):
-    avatar_id = request.avatar_id
-    voice_id = request.voice_id
-    task_id = str(uuid.uuid4())
-    task_status[task_id] = "Started"
-    logging.info(f"Task {task_id}: Started")
-    executor.submit(process_video_task, task_id, avatar_id, voice_id)
-    return {"message": "Started", "task_id": task_id}
+def handler(event):
+    """Handles the event triggered by Runpod and processes the video task."""
+    input_data = event.get('input')
+    if "endpoint" not in input_data:
+        raise HTTPException(status_code=400, detail="No endpoint specified.")
 
-@app.get("/video/status/{task_id}")
-async def get_status(task_id: str):
-    status = task_status.get(task_id)
-    if status is None:
-        raise HTTPException(status_code=404, detail="Task ID not found")
-    return {"task_id": task_id, "status": status}
+    endpoint = input_data["endpoint"]
+    if endpoint == "generate_video":
+        avatar_id = input_data["payload"]["avatar_id"]
+        voice_id = input_data["payload"]["voice_id"]
+        task_id = str(uuid.uuid4())
+        task_status[task_id] = "Started"
+        logging.info(f"Task {task_id}: Started")
+        executor.submit(process_video_task, task_id, avatar_id, voice_id)
+        return {"message": "Started", "task_id": task_id}
 
-@app.get("/download/{task_id}")
-async def download(task_id: str):
-    file_path = os.path.join(VIDEO_OUTPUT_DIR, f"{task_id}.mp4")
-    if os.path.exists(file_path):
-        return FileResponse(file_path, media_type='application/octet-stream', filename=f"{task_id}.mp4")
+    elif endpoint == "get_status":
+        task_id = input_data["payload"]["task_id"]
+        status = task_status.get(task_id)
+        if status is None:
+            raise HTTPException(status_code=404, detail="Task ID not found")
+        return {"task_id": task_id, "status": status}
+
+    elif endpoint == "download":
+        task_id = input_data["payload"]["task_id"]
+        file_path = os.path.join(VIDEO_OUTPUT_DIR, f"{task_id}.mp4")
+        if os.path.exists(file_path):
+            return {"message": "File ready for download", "file_url": f"/download/{task_id}.mp4"}
+            # return FileResponse(file_path, media_type='application/octet-stream', filename=f"{task_id}.mp4")
+        else:
+            raise HTTPException(status_code=404, detail="File not found")
+
+    elif endpoint == "delete_video":
+        task_id = input_data["payload"]["task_id"]
+        file_path = os.path.join(VIDEO_OUTPUT_DIR, f"{task_id}.mp4")
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            logging.info(f"Task {task_id}: File deleted successfully")
+            return {"message": "File deleted successfully", "task_id": task_id}
+        else:
+            raise HTTPException(status_code=404, detail="File not found")
+
     else:
-        raise HTTPException(status_code=404, detail="File not found")
+        raise HTTPException(status_code=404, detail="Endpoint not found.")
 
-@app.delete("/video/delete/{task_id}")
-async def delete_video(task_id: str):
-    file_path = os.path.join(VIDEO_OUTPUT_DIR, f"{task_id}.mp4")
-    if os.path.exists(file_path):
-        os.remove(file_path)
-        logging.info(f"Task {task_id}: File deleted successfully")
-        return {"message": "File deleted successfully", "task_id": task_id}
-    else:
-        raise HTTPException(status_code=404, detail="File not found")
+# This starts the Runpod serverless function (No need for if __name__ == '__main__':)
+if __name__ == '__main__':
+    runpod.serverless.start({'handler': handler})
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
