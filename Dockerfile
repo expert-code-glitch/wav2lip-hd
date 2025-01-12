@@ -1,5 +1,5 @@
 # Use Python 3.9 as the base image
-FROM python:3.8-slim
+FROM python:3.9-slim
 
 # Set the working directory
 WORKDIR /app
@@ -24,7 +24,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Change to the Real-ESRGAN directory and install requirements
 WORKDIR /app/Wav2Lip-HD1/Real-ESRGAN
 RUN pip install --no-cache-dir -r requirements.txt
-
+RUN pip install google-api-python-client google-auth google-auth-oauthlib google-auth-httplib2
 # Optionally, expose a port if your application runs a server
 # EXPOSE 5000
 
