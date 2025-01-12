@@ -8,10 +8,16 @@ from fastapi import HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from concurrent.futures import ThreadPoolExecutor
+from googleapiclient.discovery import build
+from google.oauth2 import service_account
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 VIDEO_OUTPUT_DIR = './output_videos_wav2lip/'
+SCOPES = ["https://www.googleapis.com/auth/drive"]
+SERVICE_ACCOUNT_FILE = "service_account.json"
+PARENT_FOLDER_ID = "1f4jafeL6_a7iX4-eQHSkiawFP7MfYW3F"
+
 os.makedirs(VIDEO_OUTPUT_DIR, exist_ok=True)
 
 executor = ThreadPoolExecutor(max_workers=3)
@@ -20,6 +26,31 @@ task_status = {}
 class VideoRequest(BaseModel):
     avatar_id: str
     voice_id: str
+
+
+
+
+
+
+def authenticate():
+    creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+    return creds
+
+def upload_file(file_path, task_id):
+    creds = authenticate()
+    service = build('drive', 'v3', credentials=creds)
+
+    file_metadata = {
+        'name': f'{task_id}.mp4',
+        'parents' : [PARENT_FOLDER_ID]
+    }
+
+    file = service.files().create(
+        body = file_metadata,
+        media_body = file_path
+    ).execute()
+
+# upload_file('results.txt')
 
 def run_command(command):
     """Run a shell command and print its output in real-time."""
@@ -91,6 +122,8 @@ def process_video_task(task_id, avatar_id, voice_id):
     
     run_command(command)
     task_status[task_id] = "Completed"
+    file_path = os.path.join(VIDEO_OUTPUT_DIR, f"{task_id}.mp4")
+    upload_file(file_path=file_path, task_id=task_id)
 
 def handler(event):
     """Handles the event triggered by Runpod and processes the video task."""
@@ -119,7 +152,8 @@ def handler(event):
         task_id = input_data["payload"]["task_id"]
         file_path = os.path.join(VIDEO_OUTPUT_DIR, f"{task_id}.mp4")
         if os.path.exists(file_path):
-            return FileResponse(file_path, media_type='application/octet-stream', filename=f"{task_id}.mp4")
+            return {"message": "File ready for download", "file_url": f"/download/{task_id}.mp4"}
+            # return FileResponse(file_path, media_type='application/octet-stream', filename=f"{task_id}.mp4")
         else:
             raise HTTPException(status_code=404, detail="File not found")
 
