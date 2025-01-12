@@ -121,9 +121,10 @@ def process_video_task(task_id, avatar_id, voice_id):
     )
     
     run_command(command)
-    task_status[task_id] = "Completed"
     file_path = os.path.join(VIDEO_OUTPUT_DIR, f"{task_id}.mp4")
     upload_file(file_path=file_path, task_id=task_id)
+    task_status[task_id] = "Completed"
+
 
 def handler(event):
     """Handles the event triggered by Runpod and processes the video task."""
